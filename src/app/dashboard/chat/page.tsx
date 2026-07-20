@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useSession } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -39,6 +40,52 @@ export default function ChatPage() {
   useEffect(() => {
     scrollToBottom();
   }, [messages, loading]);
+
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  useEffect(() => {
+    const paymentIntent = searchParams.get("payment_intent");
+    const redirectStatus = searchParams.get("redirect_status");
+    const purchaseType = searchParams.get("purchase_type");
+    const purchaseTitle = searchParams.get("title");
+
+    if (paymentIntent && redirectStatus === "succeeded") {
+      // Verify payment with backend
+      const verifyPayment = async () => {
+        try {
+          const baseUrl = process.env.NODE_ENV === "production" ? "" : (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000");
+          const res = await fetch(`${baseUrl}/api/payment/verify`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ paymentIntentId: paymentIntent }),
+          });
+
+          if (res.ok) {
+            const successMessage = purchaseType === "trip"
+              ? `🎉 **Congratulations!** Your booking for **${purchaseTitle || "your trip"}** was successful! Our AI is ready to help you customize your itinerary.`
+              : `🎉 **Congratulations!** Your payment was successful and you are now subscribed to Nomad Pro. You can now access advanced AI features and real-time adaptations.`;
+            
+            setMessages((prev) => [
+              ...prev,
+              {
+                id: Date.now().toString(),
+                role: "model",
+                content: successMessage,
+              }
+            ]);
+            // Clean up URL so we don't verify again on refresh
+            router.replace("/dashboard/chat");
+          }
+        } catch (error) {
+          console.error("Failed to verify payment:", error);
+        }
+      };
+
+      verifyPayment();
+    }
+  }, [searchParams, router]);
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -4,7 +4,8 @@ import { useSession } from "@/lib/auth-client";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { LayoutDashboard, Plane, Map, Settings, Loader2, MessageSquare, Menu, X } from "lucide-react";
+import { LayoutDashboard, Plane, Map, Settings, MessageSquare, Menu, X, PlusCircle } from "lucide-react";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 export default function DashboardLayout({
   children,
@@ -24,8 +25,8 @@ export default function DashboardLayout({
 
   if (isPending) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <LoadingSpinner message="Verifying session..." />
       </div>
     );
   }
@@ -39,6 +40,7 @@ export default function DashboardLayout({
     { name: "My Trips", href: "/dashboard/trips", icon: Plane },
     { name: "AI Planner", href: "/dashboard/ai-planner", icon: Map },
     { name: "Chat with AI", href: "/dashboard/chat", icon: MessageSquare },
+    { name: "Add Destination", href: "/dashboard/add-destination", icon: PlusCircle },
     { name: "Settings", href: "/dashboard/settings", icon: Settings },
   ];
 
@@ -65,9 +67,14 @@ export default function DashboardLayout({
       <aside className="w-64 border-r bg-background hidden md:block shrink-0">
         <div className="p-6">
           <h2 className="text-lg font-semibold tracking-tight">Dashboard</h2>
-          <p className="text-sm text-muted-foreground truncate">
-            Welcome back, {session.user?.name?.split(" ")[0] || "Traveler"}
-          </p>
+          <div className="flex items-center gap-2 mt-1">
+            <p className="text-sm text-muted-foreground truncate">
+              Welcome, {session.user?.name?.split(" ")[0] || "Traveler"}
+            </p>
+            <span className="px-2 py-0.5 text-[10px] uppercase font-bold tracking-wider rounded-md bg-primary/10 text-primary border border-primary/20">
+              {(session.user as any)?.plan || "free"}
+            </span>
+          </div>
         </div>
         <nav className="space-y-1 px-4">
           {sidebarLinks.map((link) => {
@@ -102,9 +109,14 @@ export default function DashboardLayout({
             <div className="flex items-center justify-between mb-8">
               <div>
                 <h2 className="text-lg font-semibold tracking-tight">Dashboard</h2>
-                <p className="text-xs text-muted-foreground truncate">
-                  Welcome back, {session.user?.name?.split(" ")[0] || "Traveler"}
-                </p>
+                <div className="flex items-center gap-2 mt-1">
+                  <p className="text-xs text-muted-foreground truncate">
+                    Welcome, {session.user?.name?.split(" ")[0] || "Traveler"}
+                  </p>
+                  <span className="px-2 py-0.5 text-[10px] uppercase font-bold tracking-wider rounded-md bg-primary/10 text-primary border border-primary/20">
+                    {(session.user as any)?.plan || "free"}
+                  </span>
+                </div>
               </div>
               <button 
                 onClick={() => setIsMobileDrawerOpen(false)} 

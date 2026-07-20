@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Mail, Phone, MapPin } from "lucide-react";
+import { toast } from "sonner";
 
 const contactSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -31,7 +32,7 @@ export default function ContactPage() {
   const onSubmit = (values: z.infer<typeof contactSchema>) => {
     console.log(values);
     // Here you would normally send the data to your backend
-    alert("Message sent successfully!");
+    toast.success("Message sent successfully!");
     form.reset();
   };
 

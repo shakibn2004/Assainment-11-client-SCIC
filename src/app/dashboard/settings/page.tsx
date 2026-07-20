@@ -1,14 +1,42 @@
 "use client";
 
-import { useSession } from "@/lib/auth-client";
+import { useState } from "react";
+import { useSession, authClient } from "@/lib/auth-client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { UserCircle, Mail, Shield, Bell } from "lucide-react";
+import { UserCircle, Shield, Bell, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 export default function SettingsPage() {
   const { data: session } = useSession();
+  const [nameInput, setNameInput] = useState<string | undefined>(undefined);
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  const displayName = nameInput !== undefined ? nameInput : (session?.user?.name || "");
+
+  const handleUpdateName = async () => {
+    const finalName = displayName.trim();
+    if (!finalName || finalName === session?.user?.name) return;
+    
+    setIsUpdating(true);
+    try {
+      const { error } = await authClient.updateUser({
+        name: finalName,
+      });
+      
+      if (error) {
+        toast.error(error.message || "Failed to update name");
+      } else {
+        toast.success("Profile name updated successfully!");
+      }
+    } catch {
+      toast.error("An unexpected error occurred");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
 
   return (
     <div className="space-y-8 max-w-4xl">
@@ -30,8 +58,21 @@ export default function SettingsPage() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label>Full Name</Label>
-              <Input value={session?.user?.name || ""} disabled />
-              <p className="text-xs text-muted-foreground">Your name is synced with your authentication provider.</p>
+              <div className="flex gap-2">
+                <Input 
+                  value={displayName} 
+                  onChange={(e) => setNameInput(e.target.value)}
+                  placeholder="Enter your full name" 
+                  disabled={isUpdating}
+                />
+                <Button 
+                  onClick={handleUpdateName} 
+                  disabled={isUpdating || displayName === session?.user?.name || !displayName.trim()}
+                >
+                  {isUpdating ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save"}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">Update your display name here.</p>
             </div>
             <div className="space-y-2">
               <Label>Email Address</Label>

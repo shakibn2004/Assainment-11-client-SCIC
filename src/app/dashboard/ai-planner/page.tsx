@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Sparkles, Loader2, Map } from "lucide-react";
@@ -135,9 +137,8 @@ export default function AIPlannerPage() {
           </CardHeader>
           <CardContent className="flex-1">
             {loading && (
-              <div className="flex flex-col items-center justify-center h-full space-y-4 text-muted-foreground">
-                <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                <p>Analyzing destinations, checking spots, and writing the best plan for you...</p>
+              <div className="flex flex-col items-center justify-center h-full min-h-[300px]">
+                <LoadingSpinner message="Analyzing destinations & writing the best plan for you..." />
               </div>
             )}
             {!loading && error && (

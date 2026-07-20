@@ -1,30 +1,47 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MapPin, Search, Star } from "lucide-react";
 import Link from "next/link";
-
-const dummyDestinations = [
-  { id: "1", title: "Bali Retreat", location: "Indonesia", price: "medium", climate: "tropical", rating: 4.8, image: "https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=800&q=80" },
-  { id: "2", title: "Swiss Alps", location: "Switzerland", price: "high", climate: "cold", rating: 4.9, image: "https://images.unsplash.com/photo-1530122037265-a5f1f91d3b99?auto=format&fit=crop&w=800&q=80" },
-  { id: "3", title: "Kyoto Gardens", location: "Japan", price: "medium", climate: "temperate", rating: 4.7, image: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=800&q=80" },
-  { id: "4", title: "Sahara Desert", location: "Morocco", price: "low", climate: "arid", rating: 4.5, image: "https://images.unsplash.com/photo-1509662536033-fd381e43b4e7?auto=format&fit=crop&w=800&q=80" },
-  { id: "5", title: "Santorini Getaway", location: "Greece", price: "high", climate: "temperate", rating: 4.9, image: "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=800&q=80" },
-  { id: "6", title: "Phuket Shores", location: "Thailand", price: "low", climate: "tropical", rating: 4.6, image: "https://images.unsplash.com/photo-1589394815804-964ed0be2eb5?auto=format&fit=crop&w=800&q=80" },
-  { id: "7", title: "Banff National Park", location: "Canada", price: "medium", climate: "cold", rating: 4.8, image: "https://images.unsplash.com/photo-1553184118-d20774c4c197?auto=format&fit=crop&w=800&q=80" },
-  { id: "8", title: "Dubai Skyline", location: "UAE", price: "high", climate: "arid", rating: 4.7, image: "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=800&q=80" },
-];
+import { ScrollRevealContainer, ScrollRevealItem } from "@/components/ui/scroll-reveal";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 export default function ExplorePage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [priceFilter, setPriceFilter] = useState("all");
   const [climateFilter, setClimateFilter] = useState("all");
+  
+  const [dynamicDestinations, setDynamicDestinations] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filtered = dummyDestinations.filter(d => {
+  useEffect(() => {
+    const fetchDestinations = async () => {
+      try {
+        const baseUrl = process.env.NODE_ENV === "production" ? "" : (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000");
+        const res = await fetch(`${baseUrl}/api/destinations`);
+        if (res.ok) {
+          const data = await res.json();
+          // Map MongoDB _id to id if necessary
+          const formatted = data.map((d: any) => ({
+            ...d,
+            id: d._id || d.id
+          }));
+          setDynamicDestinations(formatted);
+        }
+      } catch (error) {
+        console.error("Failed to fetch destinations:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDestinations();
+  }, []);
+
+  const filtered = dynamicDestinations.filter(d => {
     const matchSearch = d.title.toLowerCase().includes(searchTerm.toLowerCase()) || d.location.toLowerCase().includes(searchTerm.toLowerCase());
     const matchPrice = priceFilter === "all" || d.price === priceFilter;
     const matchClimate = climateFilter === "all" || d.climate === climateFilter;
@@ -73,41 +90,51 @@ export default function ExplorePage() {
         </Select>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {filtered.map(dest => (
-          <Card key={dest.id} className="overflow-hidden border-none shadow-md hover:shadow-lg transition-all h-[400px] flex flex-col group">
-            <div className="h-48 overflow-hidden relative">
-              <img 
-                src={dest.image} 
-                alt={dest.title} 
-                className="w-full h-full object-cover transition-transform group-hover:scale-110"
-              />
-              <div className="absolute top-2 right-2 bg-background/80 backdrop-blur px-2 py-1 rounded text-sm font-semibold flex items-center gap-1">
-                <Star className="w-4 h-4 fill-amber-500 text-amber-500" /> {dest.rating}
-              </div>
+      {loading ? (
+        <div className="flex justify-center items-center h-96 w-full">
+          <LoadingSpinner message="Fetching destinations..." />
+        </div>
+      ) : (
+        <div className="overflow-hidden">
+          {filtered.length === 0 ? (
+            <div className="text-center text-muted-foreground py-12">
+              No destinations found matching your criteria.
             </div>
-            <CardContent className="p-4 flex flex-col flex-1">
-              <h3 className="font-semibold text-lg mb-1">{dest.title}</h3>
-              <p className="text-muted-foreground text-sm flex items-center gap-1 mb-4">
-                <MapPin className="w-4 h-4" /> {dest.location}
-              </p>
-              <div className="flex gap-2 mb-4">
-                <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded capitalize">{dest.price}</span>
-                <span className="text-xs bg-secondary/50 px-2 py-1 rounded capitalize">{dest.climate}</span>
-              </div>
-              <div className="mt-auto">
-                <Link href={`/explore/${dest.id}`}>
-                  <Button variant="outline" className="w-full">View Details</Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-      
-      {filtered.length === 0 && (
-        <div className="text-center py-20 text-muted-foreground">
-          No destinations found matching your filters.
+          ) : (
+            <ScrollRevealContainer className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" staggerDelay={0.06}>
+              {filtered.map(dest => (
+                <ScrollRevealItem key={dest.id} variant="fade-up" className="flex flex-col h-full">
+                  <Card className="overflow-hidden border-none shadow-md hover:shadow-lg transition-all h-[400px] flex flex-col group">
+                    <div className="h-48 overflow-hidden relative">
+                      <img 
+                        src={dest.image} 
+                        alt={dest.title} 
+                        className="w-full h-full object-cover transition-transform group-hover:scale-110"
+                      />
+                      <div className="absolute top-2 right-2 bg-background/80 backdrop-blur px-2 py-1 rounded text-sm font-semibold flex items-center gap-1">
+                        <Star className="w-4 h-4 fill-amber-500 text-amber-500" /> {dest.rating}
+                      </div>
+                    </div>
+                    <CardContent className="p-4 flex flex-col flex-1">
+                      <h3 className="font-semibold text-lg mb-1">{dest.title}</h3>
+                      <p className="text-muted-foreground text-sm flex items-center gap-1 mb-4">
+                        <MapPin className="w-4 h-4" /> {dest.location}
+                      </p>
+                      <div className="flex gap-2 mb-4">
+                        <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded capitalize">{dest.price}</span>
+                        <span className="text-xs bg-secondary/50 px-2 py-1 rounded capitalize">{dest.climate}</span>
+                      </div>
+                      <div className="mt-auto">
+                        <Link href={`/explore/${dest.id}`}>
+                          <Button variant="outline" className="w-full">View Details</Button>
+                        </Link>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </ScrollRevealItem>
+              ))}
+            </ScrollRevealContainer>
+          )}
         </div>
       )}
     </div>

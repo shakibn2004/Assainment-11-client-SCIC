@@ -4,9 +4,35 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Compass, UserCircle, Loader2, Menu, X } from "lucide-react";
+import { Compass, UserCircle, Loader2, Menu, X, Crown, Gem } from "lucide-react";
 import { useSession, signOut } from "@/lib/auth-client";
 import { ThemeToggle } from "@/components/theme-toggle";
+
+const PlanBadge = ({ plan }: { plan?: string }) => {
+  if (plan === "enterprise") {
+    return (
+      <span className="flex items-center gap-1.5 bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-2.5 py-1 rounded-full text-xs font-bold tracking-wide shadow-sm border border-purple-400/50">
+        <Gem className="w-3.5 h-3.5" />
+        ENTERPRISE
+      </span>
+    );
+  }
+  if (plan === "pro") {
+    return (
+      <span className="flex items-center gap-1.5 bg-gradient-to-r from-amber-400 to-amber-600 text-white px-2.5 py-1 rounded-full text-xs font-bold tracking-wide shadow-sm border border-amber-300/50">
+        <Crown className="w-3.5 h-3.5" />
+        PRO
+      </span>
+    );
+  }
+  // Default to Free
+  return (
+    <span className="flex items-center gap-1.5 bg-gradient-to-r from-slate-400 to-slate-500 text-white px-2.5 py-1 rounded-full text-xs font-bold tracking-wide shadow-sm border border-slate-300/50">
+      <UserCircle className="w-3.5 h-3.5" />
+      FREE
+    </span>
+  );
+};
 
 export const Navbar = () => {
   const pathname = usePathname();
@@ -23,6 +49,7 @@ export const Navbar = () => {
   const navLinks = [
     { href: "/", label: "Home" },
     { href: "/explore", label: "Explore" },
+    { href: "/pricing", label: "Pricing" },
     { href: "/about", label: "About" },
     { href: "/contact", label: "Contact" },
   ];
@@ -108,9 +135,11 @@ export const Navbar = () => {
               </div>
             ) : isLoggedIn ? (
               <>
-                <Link href="/dashboard" onClick={() => setIsMobileMenuOpen(false)} className="w-full">
-                  <Button variant="ghost" className="w-full justify-start">Dashboard</Button>
-                </Link>
+                <div className="flex items-center gap-2 px-4 w-full">
+                  <Link href="/dashboard" onClick={() => setIsMobileMenuOpen(false)} className="flex-1">
+                    <Button variant="ghost" className="w-full justify-start">Dashboard</Button>
+                  </Link>
+                </div>
                 <Button variant="outline" className="w-full justify-start" onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }}>Logout</Button>
               </>
             ) : (
